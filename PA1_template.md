@@ -1,7 +1,32 @@
 # Reproducible Research: Peer Assessment 1
 
+The following libraries are required
+
+* data.table
+* ggplot2
+* plyr
+
+Please install them using install.packages function
+
+Also set up your working directory using setwd function.  The following code will download and unzip the file.
+
+
+```r
+if (!file.exists("activity.zip")){
+  download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip","activity.zip",method="curl")
+}
+
+if (!file.exists("activity.csv")){
+  unzip("activity.zip")
+}
+```
+
+
 
 ## Loading and preprocessing the data
+
+We load the data using data.table libraries fread function. Secondly i convert the date field from character to data using as.Date function
+
 
 ```r
 library(data.table)
@@ -20,7 +45,7 @@ total_steps<-ddply(data,"date",summarise,total.steps=sum(steps,na.rm=T))
 hist(total_steps$total.steps)
 ```
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
 ### Mean
 
 ```r
@@ -42,6 +67,8 @@ median(total_steps$total.steps)
 ## What is the average daily activity pattern?
 
 ### 5 minute interval plot
+
+For 5 minute interval, I use plyr ddply to summarize by interval and calculate the average.
 
 
 ```r
@@ -66,7 +93,9 @@ head(interval_steps)
 ggplot(data=interval_steps,aes(x=interval,y=avg.steps))+geom_line()
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+
+Looking at the plot it looks like most of the activity is during the morning
 
 ### The interval with maximum number of steps
 It looks like most steps are taken at the 8:35 interval
@@ -115,7 +144,7 @@ total_steps_imputed<-ddply(datax,"date",summarise,total.steps=sum(steps,na.rm=T)
 hist(total_steps_imputed$total.steps)
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10.png) 
 ### Mean of Imputed data set
 
 ```r
@@ -136,7 +165,7 @@ median(total_steps_imputed$total.steps)
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
-
+### Weekdays
 
 ```r
 data[["day_of_week"]]<-weekdays(data[,date])
@@ -145,7 +174,9 @@ wd_interval_steps<-ddply(week_days,"interval",summarise,avg.steps=mean(steps,na.
 ggplot(data=wd_interval_steps,aes(x=interval,y=avg.steps))+geom_line()
 ```
 
-![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-121.png) 
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13.png) 
+
+### Weekends
 
 ```r
 week_ends<-data[day_of_week %in% c("Saturday","Sunday")]
@@ -153,12 +184,12 @@ we_interval_steps<-ddply(week_ends,"interval",summarise,avg.steps=mean(steps,na.
 ggplot(data=we_interval_steps,aes(x=interval,y=avg.steps))+geom_line()
 ```
 
-![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-122.png) 
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14.png) 
 
-By looking at both the plots, its easy to tell that on weekdays the activity is mostly for going to work and coming back, during the day 
-there is almost no activity.
+* By looking at both the plots, its easy to tell that on weekdays the activity is mostly for going to work and coming back, during the day 
+there is less activity.
 
-But on weekends the pattern is activity during most of the day 
+* But on weekends the pattern is activity during most of the day 
 
-In both cases as we expect the steps are minimal during the night
+* In both cases as we expect the steps are minimal during the night
 
