@@ -2,19 +2,100 @@
 
 
 ## Loading and preprocessing the data
+```{r echo = TRUE}
+library(data.table)
+data<-fread("activity.csv")
+#Convert date column to date field
+data$date<-as.Date(data$date,format="%Y-%m-%d")
+```
 
 
 
 ## What is mean total number of steps taken per day?
-
-
-
+```{r echo = TRUE}
+library(plyr)
+total_steps<-ddply(data,"date",summarise,total.steps=sum(steps,na.rm=T))
+hist(total_steps$total.steps)
+```
+### Mean
+```{r echo = TRUE}
+mean(total_steps$total.steps)
+```
+### Median
+```{r echo = TRUE}
+median(total_steps$total.steps)
+```
 ## What is the average daily activity pattern?
 
+### 5 minute interval plot
+
+```{r echo = TRUE}
+#We need ggplot for this
+library(ggplot2)
+#Lets summarize the data
+interval_steps<-ddply(data,"interval",summarise,avg.steps=mean(steps,na.rm=T))
+head(interval_steps)
+ggplot(data=interval_steps,aes(x=interval,y=avg.steps))+geom_line()
+```
+
+### The interval with maximum number of steps
+It looks like most steps are taken at the 8:35 interval
+```{r echo = TRUE}
+interval_steps[interval_steps$avg.steps==max(interval_steps$avg.steps),]
+```
 
 
 ## Imputing missing values
 
+Total Number of missing values
 
+```{r echo = TRUE}
+nrow(data[is.na(steps),])
+```
+
+My strategy to impute these missing values is to get the average of the interval and populate the items
+
+```{r echo = TRUE}
+#Lets copy our data set in to datax
+datax<-data
+for (i in 1:nrow(datax)){
+  if(is.na(datax[i,steps])){
+    datax[i,steps:=as.integer(interval_steps[interval_steps$interval==datax[i,interval],"avg.steps"])]
+  }
+}
+```
+### Histogram of Imputed data set
+```{r echo = TRUE}
+#Lets create a histogram to see if this is different than the one on the top
+
+total_steps_imputed<-ddply(datax,"date",summarise,total.steps=sum(steps,na.rm=T))
+hist(total_steps_imputed$total.steps)
+```
+### Mean of Imputed data set
+```{r echo = TRUE}
+mean(total_steps_imputed$total.steps)
+```
+### Median of Imputed data set
+```{r echo = TRUE}
+median(total_steps_imputed$total.steps)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r echo = TRUE}
+data[["day_of_week"]]<-weekdays(data[,date])
+week_days<-data[day_of_week %in% c("Monday","Tuesday","Wednesday","Thursday","Friday")]
+wd_interval_steps<-ddply(week_days,"interval",summarise,avg.steps=mean(steps,na.rm=T))
+ggplot(data=wd_interval_steps,aes(x=interval,y=avg.steps))+geom_line()
+week_ends<-data[day_of_week %in% c("Saturday","Sunday")]
+we_interval_steps<-ddply(week_ends,"interval",summarise,avg.steps=mean(steps,na.rm=T))
+ggplot(data=we_interval_steps,aes(x=interval,y=avg.steps))+geom_line()
+```
+
+By looking at both the plots, its easy to tell that on weekdays the activity is mostly for going to work and coming back, during the day 
+there is almost no activity.
+
+But on weekends the pattern is activity during most of the day 
+
+In both cases as we expect the steps are minimal during the night
+
